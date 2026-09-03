@@ -13,14 +13,13 @@ import NotificationCenter
 import os.log
 import ServiceManagement
 
-@NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let defaults = UserDefaults(suiteName: "org.zhen.YogaSMC")!
     var conf = SharedConfig()
     var IOClass = "YogaSMC"
 
     var statusItem: NSStatusItem?
-    @IBOutlet weak var appMenu: NSMenu!
+    @IBOutlet var appMenu: NSMenu!
     var hide = false
 
     // MARK: - CapsLock
@@ -41,6 +40,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var fanHelper: ThinkFanHelper?
     var fanHelper2: ThinkFanHelper?
     var fanTimer: Timer?
+
+    // MARK: - ThinkCentre
+
+    var centreFanHelper: CentreFanHelper?
 
     @objc func thinkWakeup() {
         micMuteLEDHelper(conf.service)
@@ -103,6 +106,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if self.fanHelper != nil {
                 self.fanHelper!.update()
             }
+            if self.centreFanHelper != nil {
+                self.centreFanHelper!.update()
+            }
         }
     }
 
@@ -134,6 +140,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Application
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // programmatic replacement for the Main.storyboard menu shell
+        let aboutItem = NSMenuItem(title: NSLocalizedString("About YogaSMCNC", comment: ""), action: #selector(openAboutPanel(_:)), keyEquivalent: "")
+        let quitItem = NSMenuItem(title: NSLocalizedString("Quit YogaSMCNC", comment: ""), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu = NSMenu(title: "YogaSMCNC")
+        appMenu.addItem(aboutItem)
+        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(quitItem)
+
         var iter: io_iterator_t = 0
 
         IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("YogaVPC"), &iter)
@@ -317,6 +331,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     name: NSNotification.Name(rawValue: "com.apple.sound.settingsChangedNotification"),
                     object: nil
                 )
+            }
+        case "ThinkCentre":
+            if !hide, !defaults.bool(forKey: "DisableFan") {
+                if ECCap == "RW" {
+                    centreFanHelper = CentreFanHelper(appMenu, conf.connect)
+                    centreFanHelper?.update(true)
+                    if defaults.bool(forKey: "SaveFanLevel"),
+                       let duty = defaults.object(forKey: "CentreFanDuty") as? Int {
+                        centreFanHelper?.setDuty(UInt8(duty))
+                    }
+                } else {
+                    showOSD("ECAccessUnavailable")
+                }
             }
         case "YogaHIDD":
             conf.events = HIDDEvents

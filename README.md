@@ -4,6 +4,8 @@ This driver consists of YogaSMC, YogaWMI and YogaVPC.
 
 Each component can be derived for different targets. Currently ThinkPad and IdeaPad series (all other consumer brands) are supported. Support for generic Intel HID event & 5 button array, and HP system (both laptop and desktop, requires vanilla EC) is experimental.
 
+This fork additionally adds support for **ThinkCentre/IdeaCentre desktops** with a Nuvoton NCT6683D/NCT6686D/NCT6687D Super-I/O EC (verified on a ThinkCentre M710q Tiny), including fan reading, temperature sensors and fan control — see [ThinkCentre (desktops)](#thinkcentre-desktops) below and [THINKCENTRE.md](THINKCENTRE.md).
+
 Command to driver can be sent with [ioio](https://github.com/RehabMan/OS-X-ioio), e.g. `ioio -s IdeaVPC ConservationMode true`.
 
 The driver will update the status in ioreg, while details are available in system log, e.g. `log stream --predicate 'senderImagePath contains "YogaSMC"'`. 
@@ -77,6 +79,20 @@ When [Rehabman's](https://www.tonymacx86.com/threads/guide-how-to-patch-dsdt-for
 - Dump whole EC area: `ioio -s YogaVPC ReadECOffset 0x10000`
 - Known EC field name: `ioio -s YogaVPC ReadECName B1CY` (no larger than 1 byte due to OS constraint)
 
+## ThinkCentre (desktops)
+ThinkCentre/IdeaCentre desktops have no `PNP0C09` ACPI EC or VPC device — their fan is driven by a Nuvoton NCT6683D-family eSIO behind the LPC bridge. The `ThinkCentre` service attaches to the LPC `IOPCIDevice` and drives the chip directly, using the register protocol from the Linux `nct6683` driver.
+
+| Variant | ThinkCentre |
+| ---- | ---- |
+| Provider | LPC bridge (`IOPCIDevice`, ISA class) |
+| Reference | [nct6683](https://github.com/torvalds/linux/blob/master/drivers/hwmon/nct6683.c) |
+| Fan reading | ✅ (SMC keys `FNum`, `F0Ac`, `F0Mn`, `F0Mx`, `F0Sf`, `F0ID`) |
+| Fan control | ✅ (0–255 duty / Think-style levels / Auto, via app slider, `FanPWM` ioreg property or user-client EC emulation) |
+| Temperature reading | ✅ (PECI/PCH → `TCXC`, DIMM → `TM0p…`, generic → `TG0P…`) |
+| Hotkey polling | N/A (desktop) |
+
+Requires disabling `SMCSuperIO.kext` (it drives the same chip and registers the same fan keys). Full details, installation steps and the emulated EC interface are documented in [THINKCENTRE.md](THINKCENTRE.md).
+
 ## YogaSMCPane
 The preference pane provides a graphical user interface for basic information and settings, such as battery conservation mode and backlight.
 
@@ -105,6 +121,8 @@ The `YogaSMCAlter.kext` is a variant without SMC keys support and the dependenci
 2. `git clone --depth 1 https://github.com/acidanthera/MacKernelSDK`
 3. In Xcode, Select build target on upper left and click the button on the left
 
+On machines without Xcode (Command Line Tools only), the kext and app can also be built with `./build_kext.sh` and `./build_app.sh` (the app is built without its storyboard, with the menu constructed programmatically).
+
 ## Credits
 - [Apple](https://www.apple.com) for macOS
 - [Linux](https://www.linux.org) for [ideapad-laptop](https://github.com/torvalds/linux/blob/master/drivers/platform/x86/ideapad-laptop.c) and [thinkpad-acpi](https://github.com/torvalds/linux/blob/master/drivers/platform/x86/thinkpad_acpi.c) kernel module  
@@ -113,3 +131,4 @@ The `YogaSMCAlter.kext` is a variant without SMC keys support and the dependenci
 - [the-darkvoid](https://github.com/the-darkvoid) for [macOS-IOElectrify](https://github.com/the-darkvoid/macOS-IOElectrify)
 - [pali](https://github.com/pali) for [bmfdec](https://github.com/pali/bmfdec)
 - [benbender](https://github.com/benbender), [1Revenger1](https://github.com/1Revenger1) and other contributors for testing and feedback 
+- [Guenter Roeck](https://roeck-us.net/) for the Linux [nct6683](https://github.com/torvalds/linux/blob/master/drivers/hwmon/nct6683.c) driver and [joedm](https://github.com/joedm) for [SMCSuperIO](https://github.com/acidanthera/VirtualSMC/tree/master/Sensors/SMCSuperIO), the references for the ThinkCentre EC protocol

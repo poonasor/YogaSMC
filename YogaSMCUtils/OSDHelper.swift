@@ -52,20 +52,31 @@ enum EventImage: String {
 }
 
 // from https://github.com/alin23/Lunar/blob/master/Lunar/Data/Hotkeys.swift
+// OSDManager is resolved at runtime through the protocol: the private OSD
+// framework is not available for linking on all systems (hackintosh without
+// the OSD binary), and referencing the class statically would abort at launch
+private func osdManagerInstance() -> OSDUIHelperProtocol? {
+    guard dlopen("/System/Library/PrivateFrameworks/OSD.framework/OSD", RTLD_LAZY) != nil,
+          let cls = NSClassFromString("OSDManager"),
+          let shared = (cls as AnyObject).perform(NSSelectorFromString("sharedManager"))?.takeUnretainedValue() else {
+        return nil
+    }
+    return shared as? OSDUIHelperProtocol
+}
+
 func showOSDRaw(_ prompt: String, _ img: NSString? = nil, duration: UInt32 = 1000, priority: UInt32 = 0x1f4) {
-    guard let manager = OSDManager.sharedManager() as? OSDManager else {
+    guard let manager = osdManagerInstance() else {
         if #available(macOS 10.12, *) {
             os_log("OSDManager unavailable", type: .error)
         }
         return
     }
 
-    manager.showImage(
-        atPath: img ?? defaultImage,
-        onDisplayID: CGMainDisplayID(),
-        priority: priority,
-        msecUntilFade: duration,
-        withText: prompt as NSString)
+    manager.showImage(atPath: (img ?? defaultImage) as String?,
+                      onDisplayID: CGMainDisplayID(),
+                      priority: priority,
+                      msecUntilFade: duration,
+                      withText: prompt)
 }
 
 func showOSD(_ prompt: String, _ img: NSString? = nil, duration: UInt32 = 1000, priority: UInt32 = 0x1f4) {

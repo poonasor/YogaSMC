@@ -133,7 +133,7 @@ protected:
      *
      *  @return kIOReturnSuccess on success
      */
-    IOReturn method_re1b(UInt32 offset, UInt8 *result);
+    virtual IOReturn method_re1b(UInt32 offset, UInt8 *result);
 
     /**
      *  Wrapper for RECB
@@ -144,7 +144,7 @@ protected:
      *
      *  @return kIOReturnSuccess on success
      */
-    IOReturn method_recb(UInt32 offset, UInt32 size, OSData **data);
+    virtual IOReturn method_recb(UInt32 offset, UInt32 size, OSData **data);
 
     /**
      *  Wrapper for WE1B
@@ -154,7 +154,7 @@ protected:
      *
      *  @return kIOReturnSuccess on success
      */
-    IOReturn method_we1b(UInt32 offset, UInt8 value);
+    virtual IOReturn method_we1b(UInt32 offset, UInt8 value);
 
     /**
      *  Read custom field
@@ -164,7 +164,7 @@ protected:
      *
      *  @return kIOReturnSuccess on success
      */
-    IOReturn readECName(const char* name, UInt32 *result);
+    virtual IOReturn readECName(const char* name, UInt32 *result);
 
     /**
      *  Send key event through VoodooPS2
