@@ -89,6 +89,7 @@ class ThinkCentre : public YogaVPC
      */
     UInt16 sioAddr {0};
     UInt16 ecBase {0};
+    UInt16 scannedId[2] {0, 0};   // device id seen at each SioPorts entry
     UInt16 customerId {0};
 
     /**

@@ -120,11 +120,11 @@ bool ThinkCentre::detectChip() {
         sioAddr = port;
         sioEnter();
         UInt16 id = static_cast<UInt16>(sioRead(SioRegDevId) << 8) | sioRead(SioRegDevId + 1);
+        scannedId[port == SioPorts[0] ? 0 : 1] = id;
         if ((id & SioIdMask) != SioId6683 &&
             (id & SioIdMask) != SioId6686 &&
             (id & SioIdMask) != SioId6687) {
-            if (id != 0xFFFF)
-                DebugLog("unsupported SIO chip id 0x%04x @ 0x%02x", id, port);
+            AlwaysLog("SIO 0x%02x: id 0x%04x, no supported Nuvoton EC", port, id);
             sioExit();
             continue;
         }
@@ -132,10 +132,10 @@ bool ThinkCentre::detectChip() {
         sioSelect(SioLdHwm);
         UInt16 base = static_cast<UInt16>(sioRead(SioRegAddr) << 8) | sioRead(SioRegAddr + 1);
         base &= static_cast<UInt16>(~7);
-        if (base == 0) {
-            AlwaysLog("EC base I/O port unconfigured");
+        if (base < 0x100 || base >= 0xFF00) {
+            AlwaysLog("SIO 0x%02x: EC base 0x%04x out of range", port, base);
             sioExit();
-            return false;
+            continue;
         }
 
         UInt8 enable = sioRead(SioRegEnable);
@@ -149,6 +149,7 @@ bool ThinkCentre::detectChip() {
         AlwaysLog("Found Nuvoton EC 0x%04x at SIO 0x%02x, HWM base 0x%04x", id, port, ecBase);
         return true;
     }
+    AlwaysLog("No supported Nuvoton EC at 0x2E/0x4E, not attaching");
     return false;
 }
 
@@ -242,10 +243,10 @@ void ThinkCentre::updateSensors() {
     }
 
     for (UInt8 i = 0; i < tempSensorCount; i++) {
-        UInt16 raw = ecRead16(RegMon + monIndex[i] * 2);
-        // 1/256 degree C per LSB
-        UInt32 centi = static_cast<UInt32>(raw) * 100 / 256;
-        atomic_store_explicit(&tempSensor[i], (centi + 5) / 10, memory_order_release);
+        SInt16 raw = static_cast<SInt16>(ecRead16(RegMon + monIndex[i] * 2));
+        // 1/256 degree C per LSB, signed, rounded to whole degrees
+        SInt32 degC = (static_cast<SInt32>(raw) + 128) >> 8;
+        atomic_store_explicit(&tempSensor[i], static_cast<UInt32>(degC), memory_order_release);
     }
 
     if (!manualMode) {
@@ -303,6 +304,8 @@ bool ThinkCentre::init(OSDictionary *dictionary) {
 
     ioLock = IOSimpleLockAlloc();
     atomic_init(&handshakeActive, 0);
+    if (!ioLock)
+        AlwaysLog("IOSimpleLockAlloc failed");
     return ioLock != nullptr;
 }
 
@@ -316,13 +319,21 @@ void ThinkCentre::free() {
 
 IOService *ThinkCentre::probe(IOService *provider, SInt32 *score) {
     AlwaysLog("Probing %s", provider->getName());
+    provider->setProperty("YSMC-TC-Probe", "entered");
     if (!YogaBaseService::probe(provider, score))
         return nullptr;
 
     iname = "ThinkCentre";
 
-    if (!detectChip())
+    if (!detectChip()) {
+        provider->setProperty("YSMC-TC-Probe", "detectChip-failed");
+        provider->setProperty("YSMC-TC-SioId2E", scannedId[0], 32);
+        provider->setProperty("YSMC-TC-SioId4E", scannedId[1], 32);
         return nullptr;
+    }
+
+    provider->setProperty("YSMC-TC-Probe", "matched");
+    provider->setProperty("YSMC-TC-ecBase", ecBase, 32);
 
     customerId = ecRead16(RegCustomerId);
     AlwaysLog("EC customer id 0x%04x, version %d.%d", customerId, ecRead8(RegVersionHi), ecRead8(RegVersionHi + 1));
@@ -464,6 +475,8 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
 
         case EmuFanRpm:
         case EmuFanRpm + 1: {
+            if (fanCount == 0)
+                return kIOReturnUnsupported;
             UInt16 rpm = busy ? static_cast<UInt16>(atomic_load_explicit(&fanRpm[0], memory_order_acquire))
                               : ecRead16(RegFanRpm + tachIndex[0] * 2);
             *result = (offset == EmuFanRpm) ? (rpm & 0xFF) : (rpm >> 8);
@@ -477,6 +490,8 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
 
 IOReturn ThinkCentre::method_recb(UInt32 offset, UInt32 size, OSData **data) {
     if (offset == EmuFanRpm && size == 2) {
+        if (fanCount == 0)
+            return kIOReturnUnsupported;
         UInt16 rpm = atomic_load_explicit(&handshakeActive, memory_order_acquire)
             ? static_cast<UInt16>(atomic_load_explicit(&fanRpm[0], memory_order_acquire))
             : ecRead16(RegFanRpm + tachIndex[0] * 2);
