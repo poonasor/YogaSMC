@@ -53,38 +53,51 @@ static const char *const fanDescription[TC_MAX_FAN] = {
     "Aux Fan 1",
 };
 
+/**
+ *  XNU's outb() takes the port first (architecture/i386/pio.h:
+ *  outb(i386_ioport_t port, unsigned char datum)), the opposite of the
+ *  Linux outb(value, port) the register sequences below are derived from.
+ */
+static inline void portWrite(UInt16 port, UInt8 value) {
+    ::outb(static_cast<i386_ioport_t>(port), static_cast<unsigned char>(value));
+}
+
+static inline UInt8 portRead(UInt16 port) {
+    return ::inb(static_cast<i386_ioport_t>(port));
+}
+
 void ThinkCentre::sioEnter() {
-    ::outb(static_cast<unsigned char>(0x87), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(0x87), static_cast<unsigned short>(sioAddr));
+    portWrite(sioAddr, 0x87);
+    portWrite(sioAddr, 0x87);
 }
 
 void ThinkCentre::sioExit() {
-    ::outb(static_cast<unsigned char>(0xAA), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(0x02), static_cast<unsigned short>(sioAddr));
-    ::outb(0x02, sioAddr + 1);
+    portWrite(sioAddr, 0xAA);
+    portWrite(sioAddr, 0x02);
+    portWrite(sioAddr + 1, 0x02);
 }
 
 void ThinkCentre::sioSelect(UInt8 ld) {
-    ::outb(SioRegLdSel, sioAddr);
-    ::outb(static_cast<unsigned char>(ld), static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, SioRegLdSel);
+    portWrite(sioAddr + 1, ld);
 }
 
 UInt8 ThinkCentre::sioRead(UInt8 reg) {
-    ::outb(static_cast<unsigned char>(reg), static_cast<unsigned short>(sioAddr));
-    return ::inb(static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, reg);
+    return portRead(sioAddr + 1);
 }
 
 void ThinkCentre::sioWrite(UInt8 reg, UInt8 value) {
-    ::outb(static_cast<unsigned char>(reg), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(value), static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, reg);
+    portWrite(sioAddr + 1, value);
 }
 
 UInt8 ThinkCentre::ecRead8(UInt16 reg) {
     IOSimpleLockLock(ioLock);
-    ::outb(static_cast<unsigned char>(0xFF), static_cast<unsigned short>(ecBase + EcPageRegOff));   // unlock
-    ::outb(static_cast<unsigned char>(reg >> 8), static_cast<unsigned short>(ecBase + EcPageRegOff));
-    ::outb(static_cast<unsigned char>(reg & 0xFF), static_cast<unsigned short>(ecBase + EcIndexRegOff));
-    UInt8 value = ::inb(static_cast<unsigned short>(ecBase + EcDataRegOff));
+    portWrite(ecBase + EcPageRegOff, 0xFF);   // unlock
+    portWrite(ecBase + EcPageRegOff, reg >> 8);
+    portWrite(ecBase + EcIndexRegOff, reg & 0xFF);
+    UInt8 value = portRead(ecBase + EcDataRegOff);
     IOSimpleLockUnlock(ioLock);
     return value;
 }
@@ -95,10 +108,10 @@ UInt16 ThinkCentre::ecRead16(UInt16 reg) {
 
 void ThinkCentre::ecWrite8(UInt16 reg, UInt8 value) {
     IOSimpleLockLock(ioLock);
-    ::outb(static_cast<unsigned char>(0xFF), static_cast<unsigned short>(ecBase + EcPageRegOff));   // unlock
-    ::outb(static_cast<unsigned char>(reg >> 8), static_cast<unsigned short>(ecBase + EcPageRegOff));
-    ::outb(static_cast<unsigned char>(reg & 0xFF), static_cast<unsigned short>(ecBase + EcIndexRegOff));
-    ::outb(static_cast<unsigned char>(value), static_cast<unsigned short>(ecBase + EcDataRegOff));
+    portWrite(ecBase + EcPageRegOff, 0xFF);   // unlock
+    portWrite(ecBase + EcPageRegOff, reg >> 8);
+    portWrite(ecBase + EcIndexRegOff, reg & 0xFF);
+    portWrite(ecBase + EcDataRegOff, value);
     IOSimpleLockUnlock(ioLock);
 }
 
@@ -132,8 +145,8 @@ bool ThinkCentre::detectChip() {
         }
 
         sioExit();
-        ecBase = base + EcPageRegOff;
-        AlwaysLog("Found Nuvoton EC 0x%04x at SIO 0x%02x, EC base 0x%04x", id, port, ecBase);
+        ecBase = base;
+        AlwaysLog("Found Nuvoton EC 0x%04x at SIO 0x%02x, HWM base 0x%04x", id, port, ecBase);
         return true;
     }
     return false;
@@ -141,7 +154,9 @@ bool ThinkCentre::detectChip() {
 
 void ThinkCentre::setupFans() {
     for (UInt8 i = 0; i < 16 && fanCount < TC_MAX_FAN; i++) {
-        if (ecRead8(RegFaninCfg + i) & 0x01) {
+        UInt8 cfg = ecRead8(RegFaninCfg + i);
+        DebugLog("FANIN_CFG[%d] = 0x%02x", i, cfg);
+        if (cfg & 0x80) {
             tachIndex[fanCount] = i;
             fanCount++;
         }
@@ -328,10 +343,8 @@ bool ThinkCentre::start(IOService *provider) {
     setupFans();
     setupTemperatures();
 
-    if (fanCount == 0) {
-        AlwaysLog("No fan input enabled, exiting");
-        return false;
-    }
+    if (fanCount == 0)
+        AlwaysLog("No fan input enabled, publishing sensors only");
 
     setProperty("FanCount", fanCount, 8);
     setProperty("PwmAvailable", pwmAvailable);
