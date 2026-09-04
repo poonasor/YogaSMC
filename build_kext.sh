@@ -81,5 +81,7 @@ sed -e "s/\$(DEVELOPMENT_LANGUAGE)/en/" \
     YogaSMC/Info.plist > "$OUT/Contents/Info.plist"
 plutil -lint "$OUT/Contents/Info.plist"
 
-codesign --force --sign - "$OUT" >/dev/null 2>&1 || true
-echo "Built $OUT"
+# NOTE: do not ad-hoc sign the kext; OpenCore-auxKC on SIP-enabled systems
+# rejects kexts with invalid signatures while accepting fully unsigned ones.
+rm -rf "$OUT/Contents/_CodeSignature"
+echo "Built $OUT (unsigned)"
