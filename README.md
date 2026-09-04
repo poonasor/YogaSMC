@@ -80,18 +80,18 @@ When [Rehabman's](https://www.tonymacx86.com/threads/guide-how-to-patch-dsdt-for
 - Known EC field name: `ioio -s YogaVPC ReadECName B1CY` (no larger than 1 byte due to OS constraint)
 
 ## ThinkCentre (desktops)
-ThinkCentre/IdeaCentre desktops have no `PNP0C09` ACPI EC or VPC device — their fan is driven by a Nuvoton NCT6683D-family eSIO behind the LPC bridge. The `ThinkCentre` service attaches to the LPC `IOPCIDevice` and drives the chip directly, using the register protocol from the Linux `nct6683` driver.
+ThinkCentre/IdeaCentre desktops have no VPC ACPI interface — their fan is driven by a Nuvoton NCT6683D-family eSIO. The `ThinkCentre` service attaches to the ACPI EC device and drives the chip directly through its LPC I/O ports, using the register protocol from the Linux `nct6683` driver.
 
 | Variant | ThinkCentre |
 | ---- | ---- |
-| Provider | LPC bridge (`IOPCIDevice`, ISA class) |
+| Provider | ACPI EC device (`EC`/`EC0`/`H_EC`/`PNP0C09`/`ACID0001`) |
 | Reference | [nct6683](https://github.com/torvalds/linux/blob/master/drivers/hwmon/nct6683.c) |
 | Fan reading | ✅ (SMC keys `FNum`, `F0Ac`, `F0Mn`, `F0Mx`, `F0Sf`, `F0ID`) |
 | Fan control | ✅ (0–255 duty / Think-style levels / Auto, via app slider, `FanPWM` ioreg property or user-client EC emulation) |
 | Temperature reading | ✅ (PECI/PCH → `TCXC`, DIMM → `TM0p…`, generic → `TG0P…`) |
 | Hotkey polling | N/A (desktop) |
 
-Requires disabling `SMCSuperIO.kext` (it drives the same chip and registers the same fan keys). Full details, installation steps and the emulated EC interface are documented in [THINKCENTRE.md](THINKCENTRE.md).
+Requires disabling `SMCSuperIO.kext` (it drives the same chip and registers the same fan keys). Full details, installation steps, the emulated EC interface and CLT-build notes are documented in [THINKCENTRE.md](THINKCENTRE.md).
 
 ## YogaSMCPane
 The preference pane provides a graphical user interface for basic information and settings, such as battery conservation mode and backlight.

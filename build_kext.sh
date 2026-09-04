@@ -24,10 +24,10 @@ INC="-I MacKernelSDK/Headers \
  -I YogaSMC/YogaSMC \
  -I YogaSMC/YogaWMI"
 
-DEFS="-DPRODUCT_NAME=YogaSMC -DMODULE_VERSION=$VERSION -D__ACIDANTHERA_MAC_SDK"
+DEFS="-DPRODUCT_NAME=YogaSMC -DMODULE_VERSION=$VERSION -DMODULE_NAME=\"org.zhen.YogaSMC\" -DMANUAL_KEXT_GLUE -DDEBUG -D__ACIDANTHERA_MAC_SDK"
 
 CXXFLAGS="-arch x86_64 -mkernel -std=gnu++14 -fapple-kext \
- -fno-builtin -fno-exceptions -fno-rtti -fno-use-cxa-atexit \
+ -fno-builtin -fno-exceptions -fno-use-cxa-atexit \
  -fno-stack-protector -Oz \
  -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT \
  -isystem $KHDR -isystem $KPRIV \
@@ -37,7 +37,7 @@ CFLAGS="-arch x86_64 -mkernel -fapple-kext -fno-builtin \
  -fno-stack-protector -Oz \
  -DKERNEL -DKERNEL_PRIVATE -DDRIVER_PRIVATE -DAPPLE -DNeXT \
  -isystem $KHDR -isystem $KPRIV \
- $INC -DPRODUCT_NAME=YogaSMC -DMODULE_VERSION=$VERSION -D__ACIDANTHERA_MAC_SDK"
+ $INC -DPRODUCT_NAME=YogaSMC -DMODULE_VERSION=$VERSION -DMODULE_NAME=\"org.zhen.YogaSMC\" -DMANUAL_KEXT_GLUE -DDEBUG -D__ACIDANTHERA_MAC_SDK"
 
 SOURCES="YogaSMC/KeyImplementations.cpp \
  YogaSMC/WMI.cpp \
@@ -47,6 +47,7 @@ SOURCES="YogaSMC/KeyImplementations.cpp \
  YogaSMC/YogaVPC.cpp \
  YogaSMC/bmfparser.cpp \
  YogaSMC/bmfdec.c \
+ YogaSMC/YogaWMI.cpp \
  YogaSMC/YogaWMI/IdeaWMI.cpp \
  YogaSMC/YogaWMI/DYWMI.cpp \
  YogaSMC/YogaVPC/DYVPC.cpp \

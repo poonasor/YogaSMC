@@ -300,6 +300,7 @@ void ThinkCentre::free() {
 }
 
 IOService *ThinkCentre::probe(IOService *provider, SInt32 *score) {
+    AlwaysLog("Probing %s", provider->getName());
     if (!YogaBaseService::probe(provider, score))
         return nullptr;
 

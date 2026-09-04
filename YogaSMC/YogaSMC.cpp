@@ -226,3 +226,23 @@ EXPORT extern "C" kern_return_t ADDPR(kern_stop)(kmod_info_t *, void *) {
     // It is not safe to unload VirtualSMC plugins!
     return KERN_FAILURE;
 }
+
+#ifdef MANUAL_KEXT_GLUE
+// Xcode generates kmod_info from the MODULE_NAME/MODULE_START build settings
+// via ld's -kext_objects_dir; Command Line Tools builds have to provide it.
+// YogaSMCUserClient/OSKext and OpenCore's prelinked injector both require
+// this exported structure.
+#include <mach/kmod.h>
+EXPORT extern "C" kmod_info_t kmod_info = {
+    nullptr,                          // next
+    KMOD_INFO_VERSION,                // info_version
+    static_cast<uint32_t>(-1),        // id
+    MODULE_NAME,                      // name
+    xStringify(MODULE_VERSION),       // version
+    -1,                               // reference_count
+    nullptr,                          // reference_list
+    0, 0, 0,                          // address, size, hdr_size
+    ADDPR(kern_start),                // start
+    ADDPR(kern_stop)                  // stop
+};
+#endif

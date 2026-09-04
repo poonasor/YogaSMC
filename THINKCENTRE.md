@@ -5,10 +5,11 @@ desktops** whose fan is driven by a Nuvoton **NCT6683D/NCT6686D/NCT6687D**
 Super-I/O EC (verified on a ThinkCentre **M710q Tiny**, i5-7500T, macOS 13).
 
 Upstream YogaSMC only supports ThinkPad/IdeaPad laptops, which expose a
-`PNP0C09` ACPI EC the driver attaches to. ThinkCentre desktops have neither
-that EC device nor a `VPC` ACPI interface — the fan is controlled by the
-Nuvoton EC behind the LPC bridge. The new `ThinkCentre` service class
-attaches to the LPC `IOPCIDevice` instead and drives the chip directly.
+`PNP0C09` ACPI EC the driver attaches to. ThinkCentre desktops have no VPC
+ACPI interface; the fan is controlled by the Nuvoton EC. The new
+`ThinkCentre` service attaches to the ACPI EC device (`EC`/`EC0`/`H_EC`/
+`PNP0C09`/`ACID0001` — on the M710q the EC device is named `EC` with HID
+`ACID0001`) and drives the chip through its LPC I/O ports directly.
 
 ## What you get
 
@@ -31,20 +32,25 @@ duty to `0xA28+n`, then write `FAN_CFG_DONE` (0x40).
    For Xcode builds, clone `MacKernelSDK` and place `Lilu.kext` +
    `VirtualSMC.kext` (DEBUG builds) at the repo root, then build the
    `YogaSMC` scheme as usual.
-2. Copy `build/YogaSMC.kext` to `EFI/OC/Kexts/`.
-3. Add it to `Kernel → Add` in `config.plist` (any position after
-   `VirtualSMC.kext`).
-4. **Disable `SMCSuperIO.kext`** — it talks to the same chip and registers
-   the same SMC keys.
-5. Copy `build/YogaSMCNC.app` to `/Applications` and reboot.
+2. Copy `build/YogaSMC.kext` to `EFI/OC/Kexts/` and add it to
+   `Kernel → Add` in `config.plist` (any position after `VirtualSMC.kext`).
+3. **Disable `SMCSuperIO.kext`** — it talks to the same chip and registers
+   the same fan keys.
+4. Copy `build/YogaSMCNC.app` to `/Applications` and reboot.
 
 ## Verification after reboot
 
-- `ioreg -r -c ThinkCentre -w0` shows the service with `ChipName`,
-  `FanCount`, `FanDuty` (refreshes every 2 s) and `Key Submitted`.
-- `tools/smckeys` prints fan/temperature SMC keys.
+- `kmutil showloaded | grep -i yoga` — the kext must be loaded.
+- `ioreg -r -c ThinkCentre -w0` — the service with `ChipName`, `FanCount`,
+  `FanDuty` (refreshes every 2 s) and `Key Submitted`.
+- `tools/smckeys` — fan/temperature SMC keys.
 - Menu bar app: 0–100 % slider and Auto button; RPM readout while the menu
   is open.
+- Debug builds (`-DDEBUG` in `build_kext.sh`) log chip detection and probe
+  progress to the kernel log; note that early-boot kernel messages are often
+  not persisted to the unified log — the OC debug boot log
+  (`opencore-*.txt` on the EFI partition, requires a DEBUG OpenCore.efi) is
+  the reliable place to check injection.
 
 ## Emulated EC interface (for user-client clients)
 
@@ -65,3 +71,28 @@ duty to `0xA28+n`, then write `FAN_CFG_DONE` (0x40).
   `nct6683` driver (GPL-2.0-or-later, Copyright (C) 2013 Guenter Roeck) and
   the SMCSuperIO sensor implementation in acidanthera/VirtualSMC.
 - The YogaSMC preference pane does not show ThinkCentre-specific controls.
+
+## Lessons learned porting the build to Command Line Tools
+
+The kext currently loads on the M710q; getting there surfaced several
+requirements that Xcode normally hides, kept here for future reference:
+
+1. **`kmod_info` glue.** Xcode generates the exported `kmod_info`
+   structure from the `MODULE_NAME`/`MODULE_START` build settings via
+   linker-generated kext objects. CLT builds must define it in code — see
+   the `MANUAL_KEXT_GLUE` block at the end of `YogaSMC/YogaSMC.cpp`.
+   OpenCore's injector refuses a kext without it ("Invalid Parameter").
+2. **All sources must be linked.** OpenCore's prelinked linker patches
+   kernel C++ vtables by walking every `superClass` symbol it finds —
+   including *undefined* ones. One missing object file (`YogaWMI.cpp` in
+   our case) leaves the class' metaclass vtable undefined and aborts the
+   whole injection with "Vtable patching failed".
+3. **Signing is not required** for OpenCore injection; ad-hoc signatures
+   are stripped during relinking. Sign the bundle only to match Xcode
+   output.
+4. **Attach via the ACPI EC nub, not `IOPCIClassMatch`.** On the M710q a
+   personality mirroring SMCSuperIO's (`IOPCIDevice` + `IOPCIClassMatch` +
+   custom match category + `IOResourceMatch=ACPI`) never instantiated,
+   while an `IOACPIPlatformDevice` personality matching the `EC` device
+   attaches reliably (the same pattern the WMI personalities use).
+

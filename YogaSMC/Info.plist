@@ -138,12 +138,16 @@
 			<string>ThinkCentre</string>
 			<key>IOMatchCategory</key>
 			<string>ThinkCentre</string>
-			<key>IOPCIClassMatch</key>
-			<string>0x06010000&amp;0xffff0000</string>
-			<key>IOProbeScore</key>
-			<integer>100</integer>
+			<key>IONameMatch</key>
+			<array>
+				<string>EC</string>
+				<string>EC0</string>
+				<string>H_EC</string>
+				<string>PNP0C09</string>
+				<string>ACID0001</string>
+			</array>
 			<key>IOProviderClass</key>
-			<string>IOPCIDevice</string>
+			<string>IOACPIPlatformDevice</string>
 			<key>IOUserClientClass</key>
 			<string>YogaSMCUserClient</string>
 		</dict>
