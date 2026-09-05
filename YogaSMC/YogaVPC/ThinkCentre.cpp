@@ -15,32 +15,36 @@ OSDefineMetaClassAndStructors(ThinkCentre, YogaVPC);
 constexpr UInt16 ThinkCentre::SioPorts[2];
 
 /**
- *  Temperature source names (subset of the Linux nct6683 label table)
+ *  Monitoring source names, indices 0x00-0x5f of the Linux nct6683 label
+ *  table. Sources from MonSrcVoltageStart (0x60) up are voltages and are not
+ *  published, so the table stops there. The index range matters: the PECI/PCH
+ *  and DIMM entries above 0x18 are what route a sensor to TCXC and TM0p.
  */
 static const char *const monSourceName[] = {
-    nullptr,        // 0x00 disabled
-    "Local",        // 0x01
-    "Diode 0",
-    "Diode 1",
-    "Diode 2",
-    nullptr, nullptr, nullptr, // diode voltage variants
-    "Thermistor 14",
-    "Thermistor 15",
-    "Thermistor 16",
-    "Thermistor 0",
-    "Thermistor 1",
-    "Thermistor 2",
-    "Thermistor 3",
-    "Thermistor 4",
-    "Thermistor 5",
-    "Thermistor 6",
-    "Thermistor 7",
-    "Thermistor 8",
-    "Thermistor 9",
-    "Thermistor 10",
-    "Thermistor 11",
-    "Thermistor 12",
-    "Thermistor 13",
+    nullptr, "Local", "Diode 0 (curr)", "Diode 1 (curr)",                // 0x00
+    "Diode 2 (curr)", "Diode 0 (volt)", "Diode 1 (volt)", "Diode 2 (volt)", // 0x04
+    "Thermistor 14", "Thermistor 15", "Thermistor 16", "Thermistor 0",   // 0x08
+    "Thermistor 1", "Thermistor 2", "Thermistor 3", "Thermistor 4",      // 0x0c
+    "Thermistor 5", "Thermistor 6", "Thermistor 7", "Thermistor 8",      // 0x10
+    "Thermistor 9", "Thermistor 10", "Thermistor 11", "Thermistor 12",   // 0x14
+    "Thermistor 13", nullptr, nullptr, nullptr,                          // 0x18
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x1c
+    "PECI 0.0", "PECI 1.0", "PECI 2.0", "PECI 3.0",                      // 0x20
+    "PECI 0.1", "PECI 1.1", "PECI 2.1", "PECI 3.1",                      // 0x24
+    "PECI DIMM 0", "PECI DIMM 1", "PECI DIMM 2", "PECI DIMM 3",          // 0x28
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x2c
+    "PCH CPU", "PCH CHIP", "PCH CHIP CPU MAX", "PCH MCH",                // 0x30
+    "PCH DIMM 0", "PCH DIMM 1", "PCH DIMM 2", "PCH DIMM 3",              // 0x34
+    "SMBus 0", "SMBus 1", "SMBus 2", "SMBus 3",                          // 0x38
+    "SMBus 4", "SMBus 5", "DIMM 0", "DIMM 1",                            // 0x3c
+    "DIMM 2", "DIMM 3", "AMD TSI Addr 90h", "AMD TSI Addr 92h",          // 0x40
+    "AMD TSI Addr 94h", "AMD TSI Addr 96h", "AMD TSI Addr 98h", "AMD TSI Addr 9ah", // 0x44
+    "AMD TSI Addr 9ch", "AMD TSI Addr 9dh", nullptr, nullptr,            // 0x48
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x4c
+    "Virtual 0", "Virtual 1", "Virtual 2", "Virtual 3",                  // 0x50
+    "Virtual 4", "Virtual 5", "Virtual 6", "Virtual 7",                  // 0x54
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x58
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x5c
 };
 
 /**
@@ -165,7 +169,10 @@ void ThinkCentre::setupFans() {
 
     pwmAvailable = false;
     for (UInt8 i = 0; i < 8; i++) {
-        if (ecRead8(RegFanoutCfg + i) & 0x80) {
+        UInt8 cfg = ecRead8(RegFanoutCfg + i);
+        DebugLog("FANOUT_CFG[%d] = 0x%02x", i, cfg);
+        if (cfg & 0x80) {
+            pwmIndex = i;
             pwmAvailable = true;
             break;
         }
@@ -201,7 +208,7 @@ IOReturn ThinkCentre::setFanDuty(UInt8 duty) {
 
     ecWrite8(RegFanCfgCtrl, FanCfgReq);
     IODelay(1500);
-    ecWrite8(RegPwmWrite + 0, duty);
+    ecWrite8(RegPwmWrite + pwmIndex, duty);
     ecWrite8(RegFanCfgCtrl, FanCfgDone);
 
     atomic_store_explicit(&handshakeActive, 0, memory_order_release);
@@ -250,7 +257,7 @@ void ThinkCentre::updateSensors() {
     }
 
     if (!manualMode) {
-        UInt8 duty = ecRead8(RegPwm + 0);
+        UInt8 duty = ecRead8(RegPwm + pwmIndex);
         setProperty("FanDuty", duty, 8);
     }
 
@@ -359,6 +366,9 @@ bool ThinkCentre::start(IOService *provider) {
 
     setProperty("FanCount", fanCount, 8);
     setProperty("PwmAvailable", pwmAvailable);
+    setProperty("PwmIndex", pwmIndex, 8);
+    setProperty("TachIndex", tachIndex[0], 8);
+    setProperty("TempSensorCount", tempSensorCount, 8);
 
     poller = IOTimerEventSource::timerEventSource(this, [](OSObject *object, IOTimerEventSource *sender) {
         auto me = OSDynamicCast(ThinkCentre, object);
@@ -459,7 +469,7 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
     bool busy = atomic_load_explicit(&handshakeActive, memory_order_acquire);
     switch (offset) {
         case EmuFanDuty:
-            *result = manualMode ? manualDuty : (busy ? 0 : ecRead8(RegPwm + 0));
+            *result = manualMode ? manualDuty : (busy ? 0 : ecRead8(RegPwm + pwmIndex));
             return kIOReturnSuccess;
 
         case EmuFanLevel:

@@ -98,6 +98,7 @@ class ThinkCentre : public YogaVPC
      */
     UInt8 tachIndex[TC_MAX_FAN] = {0, 0, 0, 0};
     UInt8 fanCount {0};
+    UInt8 pwmIndex {0};   // FANOUT channel driving the fan
     bool pwmAvailable {false};
 
     /**
