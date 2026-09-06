@@ -12,6 +12,18 @@ The driver will update the status in ioreg, while details are available in syste
 
 Companion userspace apps, YogaSMCPane and YogaSMCNC are also available with GUI configuration and notification service.
 
+### Requirements
+
+| Component | Minimum macOS |
+| ---- | ---- |
+| `YogaSMC.kext` | 10.9 |
+| `YogaSMCNC.app`, `YogaSMCPane.prefPane` | 13.0 (Ventura) |
+
+The companion apps target macOS 13 in this fork; the kext is unaffected and still
+loads on older systems. If you need the apps on an older release, build them with a
+lower `MACOSX_DEPLOYMENT_TARGET` — but note that 10.10 and below no longer link with
+current Xcode, which removed `libarclite`, so 10.13 is the lowest value that builds.
+
 ## YogaSMC
 Allow syncing SMC keys like sensors reading and battery conservation mode.
 
