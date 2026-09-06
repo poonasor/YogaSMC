@@ -13,6 +13,7 @@
                 <outlet property="_window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
                 <outlet property="autoSleepCheck" destination="lHz-fM-CAF" id="QT6-Rq-Xiu"/>
                 <outlet property="backlightSlider" destination="GDa-7X-UOO" id="YgO-45-nNU"/>
+                <outlet property="centreViewItem" destination="Ctn-Tv-100" id="Ctn-Cn-300"/>
                 <outlet property="ideaViewItem" destination="GmU-Sc-yjc" id="MJK-Vb-NCw"/>
                 <outlet property="indicatorCheck" destination="rQA-kz-210" id="VEU-W3-JH1"/>
                 <outlet property="mainTabView" destination="Fe4-fM-T79" id="zQh-TM-B9f"/>
@@ -25,6 +26,17 @@
                 <outlet property="vBatteryTemperature" destination="0xn-Ly-yhc" id="PvZ-fF-JYH"/>
                 <outlet property="vBluetooth" destination="BZO-y6-Hbq" id="Ldm-X4-PdI"/>
                 <outlet property="vCamera" destination="Efv-S1-sfb" id="0wF-xZ-tmI"/>
+                <outlet property="vCentreChip" destination="Ctn-Va-220" id="Ctn-Cn-305"/>
+                <outlet property="vCentreDisableFan" destination="Ctn-Ck-240" id="Ctn-Cn-310"/>
+                <outlet property="vCentreDuty" destination="Ctn-Va-201" id="Ctn-Cn-302"/>
+                <outlet property="vCentreEcBase" destination="Ctn-Va-221" id="Ctn-Cn-306"/>
+                <outlet property="vCentreFanCount" destination="Ctn-Va-222" id="Ctn-Cn-307"/>
+                <outlet property="vCentreKeyCount" destination="Ctn-Va-224" id="Ctn-Cn-309"/>
+                <outlet property="vCentreMode" destination="Ctn-Va-200" id="Ctn-Cn-301"/>
+                <outlet property="vCentrePwm" destination="Ctn-Va-202" id="Ctn-Cn-303"/>
+                <outlet property="vCentreSaveFanLevel" destination="Ctn-Ck-241" id="Ctn-Cn-311"/>
+                <outlet property="vCentreSensorCount" destination="Ctn-Va-223" id="Ctn-Cn-308"/>
+                <outlet property="vCentreTach" destination="Ctn-Va-203" id="Ctn-Cn-304"/>
                 <outlet property="vChargeThresholdStart" destination="TYs-Hl-oRb" id="5SD-Ls-toa"/>
                 <outlet property="vChargeThresholdStop" destination="DUq-Wn-qQw" id="rHX-J0-Yc6"/>
                 <outlet property="vClamshellMode" destination="fWe-h7-yii" id="vcg-Yg-d7X"/>
@@ -37,7 +49,6 @@
                 <outlet property="vDYTCRevision" destination="W8B-pr-Ckq" id="JAI-9h-llK"/>
                 <outlet property="vDisableFan" destination="5sT-I1-ipX" id="0X7-Qq-6Zs"/>
                 <outlet property="vECRead" destination="w0X-ID-3TJ" id="8MX-ad-Owg"/>
-                <outlet property="vFanSpeed" destination="uDk-6Z-gTN" id="2iO-3w-kaE"/>
                 <outlet property="vFanStop" destination="IDX-pC-nEt" id="Wby-GI-i2A"/>
                 <outlet property="vFnKeyRadio" destination="So0-Nv-cHB" id="SOX-xb-H38"/>
                 <outlet property="vFxKeyRadio" destination="TKw-8Y-61F" id="GaD-1g-5iH"/>
@@ -58,7 +69,6 @@
                 <outlet property="vStandbyLEDSlider" destination="96M-Na-T3c" id="kka-T4-nLV"/>
                 <outlet property="vThinkDotSlider" destination="IMC-QI-01L" id="Jhh-3P-USI"/>
                 <outlet property="vVersion" destination="4hU-9e-sdI" id="Lpw-hX-Y1m"/>
-                <outlet property="vView" destination="eaw-hp-JIE" id="ZQQ-rW-VRD"/>
                 <outlet property="vWWAN" destination="alV-ed-O4q" id="gTA-fJ-AsV"/>
                 <outlet property="vWireless" destination="FdO-1A-6lu" id="j6g-Hz-H8M"/>
                 <outlet property="yogaModeCheck" destination="v4R-wB-RHi" id="7We-zz-8M3"/>
@@ -1197,6 +1207,249 @@
                                     </subviews>
                                 </view>
                             </tabViewItem>
+                                <tabViewItem label="Centre" identifier="4" id="Ctn-Tv-100" userLabel="CentreView">
+                                    <view key="view" id="Ctn-Vw-101">
+                                        <rect key="frame" x="10" y="33" width="622" height="306"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <subviews>
+                                    <box fixedFrame="YES" title="Fan" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Bx-100">
+                                        <rect key="frame" x="6" y="118" width="300" height="178"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <view key="contentView" id="Ctn-Bv-100">
+                                            <rect key="frame" x="3" y="3" width="294" height="158"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <subviews>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-200">
+                                            <rect key="frame" x="18" y="126" width="120" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Mode" id="Ctn-Lc-200">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-200">
+                                            <rect key="frame" x="150" y="126" width="126" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-200">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-201">
+                                            <rect key="frame" x="18" y="100" width="120" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Duty" id="Ctn-Lc-201">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-201">
+                                            <rect key="frame" x="150" y="100" width="126" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-201">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-202">
+                                            <rect key="frame" x="18" y="74" width="120" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="PWM" id="Ctn-Lc-202">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-202">
+                                            <rect key="frame" x="150" y="74" width="126" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-202">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-203">
+                                            <rect key="frame" x="18" y="48" width="120" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Tachometer" id="Ctn-Lc-203">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-203">
+                                            <rect key="frame" x="150" y="48" width="126" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-203">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-210">
+                                            <rect key="frame" x="18" y="14" width="258" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Live speed is in the menu bar." id="Ctn-Lc-210">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                            </subviews>
+                                        </view>
+                                        <font key="titleFont" metaFont="system"/>
+                                    </box>
+                                    <box fixedFrame="YES" title="Hardware" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Bx-130">
+                                        <rect key="frame" x="316" y="118" width="300" height="178"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <view key="contentView" id="Ctn-Bv-130">
+                                            <rect key="frame" x="3" y="3" width="294" height="158"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <subviews>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-220">
+                                            <rect key="frame" x="18" y="126" width="100" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Chip" id="Ctn-Lc-220">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-220">
+                                            <rect key="frame" x="124" y="126" width="152" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-220">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-221">
+                                            <rect key="frame" x="18" y="100" width="100" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="EC window" id="Ctn-Lc-221">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-221">
+                                            <rect key="frame" x="124" y="100" width="152" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-221">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-222">
+                                            <rect key="frame" x="18" y="74" width="100" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Fans" id="Ctn-Lc-222">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-222">
+                                            <rect key="frame" x="124" y="74" width="152" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-222">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-223">
+                                            <rect key="frame" x="18" y="48" width="100" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Sensors" id="Ctn-Lc-223">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-223">
+                                            <rect key="frame" x="124" y="48" width="152" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-223">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-224">
+                                            <rect key="frame" x="18" y="22" width="100" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="SMC keys" id="Ctn-Lc-224">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Va-224">
+                                            <rect key="frame" x="124" y="22" width="152" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" placeholderString="Unknown" id="Ctn-Vc-224">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                            </subviews>
+                                        </view>
+                                        <font key="titleFont" metaFont="system"/>
+                                    </box>
+                                    <box fixedFrame="YES" title="Menu bar app" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Bx-150">
+                                        <rect key="frame" x="6" y="10" width="610" height="100"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <view key="contentView" id="Ctn-Bv-150">
+                                            <rect key="frame" x="3" y="3" width="604" height="80"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <subviews>
+                                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Ck-240">
+                                            <rect key="frame" x="18" y="46" width="320" height="18"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="check" title="Hide fan control in the menu bar" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Ctn-Cc-240">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="vCentreDisableFanSet:" target="-2" id="Ctn-Ac-240"/>
+                                            </connections>
+                                        </button>
+                                        <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-Ck-241">
+                                            <rect key="frame" x="18" y="24" width="320" height="18"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="check" title="Restore fan duty at login" bezelStyle="regularSquare" imagePosition="left" inset="2" id="Ctn-Cc-241">
+                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="vCentreSaveFanLevelSet:" target="-2" id="Ctn-Ac-241"/>
+                                            </connections>
+                                        </button>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ctn-La-242">
+                                            <rect key="frame" x="18" y="2" width="560" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Changing either setting restarts YogaSMCNC." id="Ctn-Lc-242">
+                                                <font key="font" usesAppearanceFont="YES"/>
+                                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                            </subviews>
+                                        </view>
+                                        <font key="titleFont" metaFont="system"/>
+                                    </box>
+                                        </subviews>
+                                    </view>
+                                </tabViewItem>
                         </tabViewItems>
                     </tabView>
                 </subviews>
