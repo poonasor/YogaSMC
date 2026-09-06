@@ -6,6 +6,20 @@ set -e
 REPO="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO"
 
+# These live at the repo root but are gitignored, so a fresh clone lacks them
+# and the compile would otherwise fail with a wall of missing-header errors.
+missing=""
+for dep in MacKernelSDK/Headers Lilu.kext/Contents/Resources VirtualSMC.kext/Contents/Resources; do
+    [ -d "$dep" ] || missing="$missing  $dep\n"
+done
+if [ -n "$missing" ]; then
+    printf 'error: missing build dependencies:\n%b' "$missing"
+    echo "See THINKCENTRE.md 'Installation (OpenCore)' step 0:"
+    echo "  git clone --depth=1 https://github.com/acidanthera/MacKernelSDK"
+    echo "  place DEBUG Lilu.kext and VirtualSMC.kext at the repo root"
+    exit 1
+fi
+
 SDK=$(xcrun --show-sdk-path)
 KHDR="$SDK/System/Library/Frameworks/Kernel.framework/Headers"
 KPRIV="$SDK/System/Library/Frameworks/Kernel.framework/PrivateHeaders"

@@ -25,13 +25,54 @@ Fan control uses the EC configuration handshake from the Linux `nct6683`
 driver: write `FAN_CFG_REQ` (0x80) to `0xA01`, wait ~1.5 ms, write the target
 duty to `0xA28+n`, then write `FAN_CFG_DONE` (0x40).
 
+Note that `0xA01`/`0xA28` are **EC register addresses** (bank `0x0A`, index
+`0x01`/`0x28`) reached through the indexed window at `ecBase+4/5/6`, not LPC
+I/O ports. Their resemblance to the `0x0A00-0x0A2F` range the `SIO1` ACPI
+device reserves on the M710q is a coincidence.
+
+## Status
+
+Verified working on a ThinkCentre M710q Tiny (i5-7500T, macOS 13.7.8,
+OpenCore, SIP enabled):
+
+```
+ThinkCentre  registered, matched, active
+  ChipName = "Nuvoton NCT6683D"   FanCount = 1   PwmAvailable = Yes
+  Key Submitted = 10              HWM base 0xa20 at SIO 0x2e
+
+FNum  1        F0Ac  1061 rpm      F0ID  "CPU Fan"
+TG0P  52.00 C  TG1P  25.00 C
+```
+
 ## Installation (OpenCore)
+
+0. **Fetch the build dependencies first.** `MacKernelSDK`, `Lilu.kext` and
+   `VirtualSMC.kext` live at the repo root but are gitignored, so a fresh
+   clone does not have them and `build_kext.sh` will fail on the missing
+   include paths. Get them with:
+
+   ```sh
+   git clone --depth=1 https://github.com/acidanthera/MacKernelSDK
+   # DEBUG builds of both, from the latest releases:
+   #   https://github.com/acidanthera/Lilu/releases       -> Lilu.kext
+   #   https://github.com/acidanthera/VirtualSMC/releases -> VirtualSMC.kext
+   # unzip and place Lilu.kext and VirtualSMC.kext at the repo root
+   ```
+
+   Only their `Contents/Resources` headers are used, so the DEBUG variants of
+   the versions you run are the right ones (currently Lilu 1.7.1,
+   VirtualSMC 1.3.7).
 
 1. Build: `./build_kext.sh` (kext) and `./build_app.sh` (menu bar app).
    Both scripts work with Command Line Tools only — Xcode is not required.
-   For Xcode builds, clone `MacKernelSDK` and place `Lilu.kext` +
-   `VirtualSMC.kext` (DEBUG builds) at the repo root, then build the
-   `YogaSMC` scheme as usual.
+   With full Xcode you can instead build the `YogaSMC` scheme as usual, using
+   the same dependencies from step 0.
+
+   `YogaSMCPane` is the exception: compiling its `Base.lproj/YogaSMCPane.xib`
+   needs `ibtool`, which requires full Xcode, and the pane has no
+   `ThinkCentre` case — `YogaSMCPane.swift` would show it as "Unsupported"
+   with both feature tabs removed. Every ThinkCentre control lives in the
+   menu bar app instead.
 2. Copy `build/YogaSMC.kext` to `EFI/OC/Kexts/` and add it to
    `Kernel → Add` in `config.plist` (any position after `VirtualSMC.kext`).
 3. **Disable `SMCSuperIO.kext`** — it talks to the same chip and registers
@@ -43,14 +84,31 @@ duty to `0xA28+n`, then write `FAN_CFG_DONE` (0x40).
 - `kmutil showloaded | grep -i yoga` — the kext must be loaded.
 - `ioreg -r -c ThinkCentre -w0` — the service with `ChipName`, `FanCount`,
   `FanDuty` (refreshes every 2 s) and `Key Submitted`.
-- `tools/smckeys` — fan/temperature SMC keys.
+- `clang -O2 -framework IOKit -o build/smckeys tools/smckeys.c && ./build/smckeys`
+  — fan/temperature SMC keys, decoded by the type each key reports.
 - Menu bar app: 0–100 % slider and Auto button; RPM readout while the menu
   is open.
 - Debug builds (`-DDEBUG` in `build_kext.sh`) log chip detection and probe
-  progress to the kernel log; note that early-boot kernel messages are often
-  not persisted to the unified log — the OC debug boot log
-  (`opencore-*.txt` on the EFI partition, requires a DEBUG OpenCore.efi) is
-  the reliable place to check injection.
+  progress to the kernel log. Getting at that log is genuinely awkward: the
+  driver uses `IOLog` (prefix `YSMC`, **not** `YogaSMC`), which lands in the
+  kernel ring buffer readable with `sudo dmesg`, not in `log show`. The
+  default 128 KB buffer can be flushed within a minute or two of login by
+  unrelated spam, and `msgbuf=<bytes>` did not raise it on macOS 13.7.8.
+  The OC debug boot log (`opencore-*.txt` on the EFI partition, requires a
+  DEBUG OpenCore.efi) only proves injection — IOKit matching happens later.
+
+  Because of that, a failed probe leaves breadcrumbs on the ACPI EC nub,
+  which outlives the driver and is readable at any time:
+
+  ```sh
+  ioreg -r -n EC -l -w0 | grep YSMC-TC
+  #   YSMC-TC-Probe   = "entered" | "detectChip-failed" | "matched"
+  #   YSMC-TC-SioId2E / YSMC-TC-SioId4E   device id seen at each SIO port
+  #   YSMC-TC-ecBase  HWM base once detection succeeds
+  ```
+
+  `ioreg -rc ThinkCentre -w0` additionally publishes `PwmIndex`, `TachIndex`
+  and `TempSensorCount` so a wrong channel pick is visible without a log.
 
 ## Emulated EC interface (for user-client clients)
 

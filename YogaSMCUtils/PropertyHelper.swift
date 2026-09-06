@@ -66,3 +66,20 @@ func sendNumber(_ key: String, _ value: Int, _ service: io_service_t) -> Bool {
 func sendString(_ key: String, _ value: String, _ service: io_service_t) -> Bool {
     return (kIOReturnSuccess == IORegistryEntrySetCFProperty(service, key as CFString, value as CFString))
 }
+
+/// Read a property from the service's provider in the IOService plane.
+/// `ThinkCentre::probe` leaves its detection breadcrumbs on the ACPI EC nub it
+/// attaches to, not on itself, so they are only reachable through the parent.
+func getParentNumber(_ key: String, _ service: io_service_t) -> Int? {
+    var parent: io_registry_entry_t = 0
+    guard kIOReturnSuccess == IORegistryEntryGetParentEntry(service, kIOServicePlane, &parent),
+          parent != 0 else {
+        return nil
+    }
+    defer { IOObjectRelease(parent) }
+    guard let rvalue = IORegistryEntryCreateCFProperty(parent, key as CFString, kCFAllocatorDefault, 0),
+          let val = rvalue.takeRetainedValue() as? Int else {
+        return nil
+    }
+    return val
+}

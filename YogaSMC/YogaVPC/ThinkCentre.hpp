@@ -89,6 +89,7 @@ class ThinkCentre : public YogaVPC
      */
     UInt16 sioAddr {0};
     UInt16 ecBase {0};
+    UInt16 scannedId[2] {0, 0};   // device id seen at each SioPorts entry
     UInt16 customerId {0};
 
     /**
@@ -97,6 +98,7 @@ class ThinkCentre : public YogaVPC
      */
     UInt8 tachIndex[TC_MAX_FAN] = {0, 0, 0, 0};
     UInt8 fanCount {0};
+    UInt8 pwmIndex {0};   // FANOUT channel driving the fan
     bool pwmAvailable {false};
 
     /**

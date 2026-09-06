@@ -102,11 +102,31 @@ class YogaSMCPane: NSPreferencePane {
 
     @IBOutlet weak var vMuteLEDFixup: NSButton!
 
+    // Centre
+
+    @IBOutlet weak var vCentreMode: NSTextField!
+    @IBOutlet weak var vCentreDuty: NSTextField!
+    @IBOutlet weak var vCentrePwm: NSTextField!
+    @IBOutlet weak var vCentreTach: NSTextField!
+
+    @IBOutlet weak var vCentreChip: NSTextField!
+    @IBOutlet weak var vCentreEcBase: NSTextField!
+    @IBOutlet weak var vCentreFanCount: NSTextField!
+    @IBOutlet weak var vCentreSensorCount: NSTextField!
+    @IBOutlet weak var vCentreKeyCount: NSTextField!
+
+    @IBOutlet weak var vCentreDisableFan: NSButton!
+    @IBOutlet weak var vCentreSaveFanLevel: NSButton!
+
     // Main
 
     @IBOutlet weak var mainTabView: NSTabView!
-    @IBOutlet weak var ideaViewItem: NSTabViewItem!
-    @IBOutlet weak var thinkViewItem: NSTabViewItem!
+    // Deliberately strong: NSTabView holds the only other reference to a tab item,
+    // so removeTabViewItem() deallocates it and a weak outlet would be nil on the
+    // next willSelect().
+    @IBOutlet var ideaViewItem: NSTabViewItem!
+    @IBOutlet var thinkViewItem: NSTabViewItem!
+    @IBOutlet var centreViewItem: NSTabViewItem!
 
     @IBOutlet weak var vDYTCRevision: NSTextField!
     @IBOutlet weak var vDYTCFuncMode: NSTextField!
@@ -124,12 +144,25 @@ class YogaSMCPane: NSPreferencePane {
 
     @IBOutlet weak var vClamshellMode: NSButton!
 
+    /// Removing a tab item deallocates it, so a second willSelect() would otherwise
+    /// remove an item that is no longer there. AppKit tolerates that, but only
+    /// after the outlet has been dereferenced.
+    func hideTab(_ item: NSTabViewItem?) {
+        guard let item = item,
+              mainTabView.indexOfTabViewItem(item) != NSNotFound else { return }
+        mainTabView.removeTabViewItem(item)
+    }
+
     override func mainViewDidLoad() {
         super.mainViewDidLoad()
         if #available(macOS 10.12, *) {
             os_log(#function, type: .info)
         }
-        // nothing
+        // The Centre checkboxes mirror defaults the menu bar app reads, so seed them
+        // once at load: in a DEBUG build the tab stays visible on Idea/Think machines,
+        // where updateCentre() never runs and they would otherwise show a stale off.
+        vCentreDisableFan.state = defaults.bool(forKey: "DisableFan") ? .on : .off
+        vCentreSaveFanLevel.state = defaults.bool(forKey: "SaveFanLevel") ? .on : .off
     }
 
     override func willSelect() {
@@ -167,22 +200,33 @@ class YogaSMCPane: NSPreferencePane {
             vClass.stringValue = "Idea"
             updateIdea(props)
             #if !DEBUG
-            mainTabView.removeTabViewItem(thinkViewItem)
+            hideTab(thinkViewItem)
+            hideTab(centreViewItem)
             #endif
         case "ThinkVPC":
             vClass.stringValue = "Think"
             updateThink(props)
             #if !DEBUG
-            mainTabView.removeTabViewItem(ideaViewItem)
+            hideTab(ideaViewItem)
+            hideTab(centreViewItem)
             #endif
+        case "ThinkCentre":
+            vClass.stringValue = "Centre"
+            updateCentre(props)
+            // A desktop shares none of the laptop controls, and leaving the Think
+            // tab up would duplicate the fan checkboxes onto the same defaults.
+            hideTab(ideaViewItem)
+            hideTab(thinkViewItem)
         case "YogaHIDD":
             vClass.stringValue = "HIDD"
-            mainTabView.removeTabViewItem(ideaViewItem)
-            mainTabView.removeTabViewItem(thinkViewItem)
+            hideTab(ideaViewItem)
+            hideTab(thinkViewItem)
+            hideTab(centreViewItem)
         default:
             vClass.stringValue = "Unsupported"
-            mainTabView.removeTabViewItem(ideaViewItem)
-            mainTabView.removeTabViewItem(thinkViewItem)
+            hideTab(ideaViewItem)
+            hideTab(thinkViewItem)
+            hideTab(centreViewItem)
         }
     }
 }

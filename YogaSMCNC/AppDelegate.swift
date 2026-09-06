@@ -336,11 +336,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !hide, !defaults.bool(forKey: "DisableFan") {
                 if ECCap == "RW" {
                     centreFanHelper = CentreFanHelper(appMenu, conf.connect)
-                    centreFanHelper?.update(true)
+                    // Restore first, then refresh - the same order as the Think path
+                    // above. update(true) is what reads the level register to place the
+                    // Auto toggle and the slider, so a duty applied after it leaves both
+                    // still showing automatic while the fan is actually pinned.
                     if defaults.bool(forKey: "SaveFanLevel"),
                        let duty = defaults.object(forKey: "CentreFanDuty") as? Int {
                         centreFanHelper?.setDuty(UInt8(duty))
                     }
+                    centreFanHelper?.update(true)
                 } else {
                     showOSD("ECAccessUnavailable")
                 }

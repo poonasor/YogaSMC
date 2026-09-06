@@ -15,32 +15,36 @@ OSDefineMetaClassAndStructors(ThinkCentre, YogaVPC);
 constexpr UInt16 ThinkCentre::SioPorts[2];
 
 /**
- *  Temperature source names (subset of the Linux nct6683 label table)
+ *  Monitoring source names, indices 0x00-0x5f of the Linux nct6683 label
+ *  table. Sources from MonSrcVoltageStart (0x60) up are voltages and are not
+ *  published, so the table stops there. The index range matters: the PECI/PCH
+ *  and DIMM entries above 0x18 are what route a sensor to TCXC and TM0p.
  */
 static const char *const monSourceName[] = {
-    nullptr,        // 0x00 disabled
-    "Local",        // 0x01
-    "Diode 0",
-    "Diode 1",
-    "Diode 2",
-    nullptr, nullptr, nullptr, // diode voltage variants
-    "Thermistor 14",
-    "Thermistor 15",
-    "Thermistor 16",
-    "Thermistor 0",
-    "Thermistor 1",
-    "Thermistor 2",
-    "Thermistor 3",
-    "Thermistor 4",
-    "Thermistor 5",
-    "Thermistor 6",
-    "Thermistor 7",
-    "Thermistor 8",
-    "Thermistor 9",
-    "Thermistor 10",
-    "Thermistor 11",
-    "Thermistor 12",
-    "Thermistor 13",
+    nullptr, "Local", "Diode 0 (curr)", "Diode 1 (curr)",                // 0x00
+    "Diode 2 (curr)", "Diode 0 (volt)", "Diode 1 (volt)", "Diode 2 (volt)", // 0x04
+    "Thermistor 14", "Thermistor 15", "Thermistor 16", "Thermistor 0",   // 0x08
+    "Thermistor 1", "Thermistor 2", "Thermistor 3", "Thermistor 4",      // 0x0c
+    "Thermistor 5", "Thermistor 6", "Thermistor 7", "Thermistor 8",      // 0x10
+    "Thermistor 9", "Thermistor 10", "Thermistor 11", "Thermistor 12",   // 0x14
+    "Thermistor 13", nullptr, nullptr, nullptr,                          // 0x18
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x1c
+    "PECI 0.0", "PECI 1.0", "PECI 2.0", "PECI 3.0",                      // 0x20
+    "PECI 0.1", "PECI 1.1", "PECI 2.1", "PECI 3.1",                      // 0x24
+    "PECI DIMM 0", "PECI DIMM 1", "PECI DIMM 2", "PECI DIMM 3",          // 0x28
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x2c
+    "PCH CPU", "PCH CHIP", "PCH CHIP CPU MAX", "PCH MCH",                // 0x30
+    "PCH DIMM 0", "PCH DIMM 1", "PCH DIMM 2", "PCH DIMM 3",              // 0x34
+    "SMBus 0", "SMBus 1", "SMBus 2", "SMBus 3",                          // 0x38
+    "SMBus 4", "SMBus 5", "DIMM 0", "DIMM 1",                            // 0x3c
+    "DIMM 2", "DIMM 3", "AMD TSI Addr 90h", "AMD TSI Addr 92h",          // 0x40
+    "AMD TSI Addr 94h", "AMD TSI Addr 96h", "AMD TSI Addr 98h", "AMD TSI Addr 9ah", // 0x44
+    "AMD TSI Addr 9ch", "AMD TSI Addr 9dh", nullptr, nullptr,            // 0x48
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x4c
+    "Virtual 0", "Virtual 1", "Virtual 2", "Virtual 3",                  // 0x50
+    "Virtual 4", "Virtual 5", "Virtual 6", "Virtual 7",                  // 0x54
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x58
+    nullptr, nullptr, nullptr, nullptr,                                  // 0x5c
 };
 
 /**
@@ -53,38 +57,51 @@ static const char *const fanDescription[TC_MAX_FAN] = {
     "Aux Fan 1",
 };
 
+/**
+ *  XNU's outb() takes the port first (architecture/i386/pio.h:
+ *  outb(i386_ioport_t port, unsigned char datum)), the opposite of the
+ *  Linux outb(value, port) the register sequences below are derived from.
+ */
+static inline void portWrite(UInt16 port, UInt8 value) {
+    ::outb(static_cast<i386_ioport_t>(port), static_cast<unsigned char>(value));
+}
+
+static inline UInt8 portRead(UInt16 port) {
+    return ::inb(static_cast<i386_ioport_t>(port));
+}
+
 void ThinkCentre::sioEnter() {
-    ::outb(static_cast<unsigned char>(0x87), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(0x87), static_cast<unsigned short>(sioAddr));
+    portWrite(sioAddr, 0x87);
+    portWrite(sioAddr, 0x87);
 }
 
 void ThinkCentre::sioExit() {
-    ::outb(static_cast<unsigned char>(0xAA), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(0x02), static_cast<unsigned short>(sioAddr));
-    ::outb(0x02, sioAddr + 1);
+    portWrite(sioAddr, 0xAA);
+    portWrite(sioAddr, 0x02);
+    portWrite(sioAddr + 1, 0x02);
 }
 
 void ThinkCentre::sioSelect(UInt8 ld) {
-    ::outb(SioRegLdSel, sioAddr);
-    ::outb(static_cast<unsigned char>(ld), static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, SioRegLdSel);
+    portWrite(sioAddr + 1, ld);
 }
 
 UInt8 ThinkCentre::sioRead(UInt8 reg) {
-    ::outb(static_cast<unsigned char>(reg), static_cast<unsigned short>(sioAddr));
-    return ::inb(static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, reg);
+    return portRead(sioAddr + 1);
 }
 
 void ThinkCentre::sioWrite(UInt8 reg, UInt8 value) {
-    ::outb(static_cast<unsigned char>(reg), static_cast<unsigned short>(sioAddr));
-    ::outb(static_cast<unsigned char>(value), static_cast<unsigned short>(sioAddr + 1));
+    portWrite(sioAddr, reg);
+    portWrite(sioAddr + 1, value);
 }
 
 UInt8 ThinkCentre::ecRead8(UInt16 reg) {
     IOSimpleLockLock(ioLock);
-    ::outb(static_cast<unsigned char>(0xFF), static_cast<unsigned short>(ecBase + EcPageRegOff));   // unlock
-    ::outb(static_cast<unsigned char>(reg >> 8), static_cast<unsigned short>(ecBase + EcPageRegOff));
-    ::outb(static_cast<unsigned char>(reg & 0xFF), static_cast<unsigned short>(ecBase + EcIndexRegOff));
-    UInt8 value = ::inb(static_cast<unsigned short>(ecBase + EcDataRegOff));
+    portWrite(ecBase + EcPageRegOff, 0xFF);   // unlock
+    portWrite(ecBase + EcPageRegOff, reg >> 8);
+    portWrite(ecBase + EcIndexRegOff, reg & 0xFF);
+    UInt8 value = portRead(ecBase + EcDataRegOff);
     IOSimpleLockUnlock(ioLock);
     return value;
 }
@@ -95,10 +112,10 @@ UInt16 ThinkCentre::ecRead16(UInt16 reg) {
 
 void ThinkCentre::ecWrite8(UInt16 reg, UInt8 value) {
     IOSimpleLockLock(ioLock);
-    ::outb(static_cast<unsigned char>(0xFF), static_cast<unsigned short>(ecBase + EcPageRegOff));   // unlock
-    ::outb(static_cast<unsigned char>(reg >> 8), static_cast<unsigned short>(ecBase + EcPageRegOff));
-    ::outb(static_cast<unsigned char>(reg & 0xFF), static_cast<unsigned short>(ecBase + EcIndexRegOff));
-    ::outb(static_cast<unsigned char>(value), static_cast<unsigned short>(ecBase + EcDataRegOff));
+    portWrite(ecBase + EcPageRegOff, 0xFF);   // unlock
+    portWrite(ecBase + EcPageRegOff, reg >> 8);
+    portWrite(ecBase + EcIndexRegOff, reg & 0xFF);
+    portWrite(ecBase + EcDataRegOff, value);
     IOSimpleLockUnlock(ioLock);
 }
 
@@ -107,11 +124,11 @@ bool ThinkCentre::detectChip() {
         sioAddr = port;
         sioEnter();
         UInt16 id = static_cast<UInt16>(sioRead(SioRegDevId) << 8) | sioRead(SioRegDevId + 1);
+        scannedId[port == SioPorts[0] ? 0 : 1] = id;
         if ((id & SioIdMask) != SioId6683 &&
             (id & SioIdMask) != SioId6686 &&
             (id & SioIdMask) != SioId6687) {
-            if (id != 0xFFFF)
-                DebugLog("unsupported SIO chip id 0x%04x @ 0x%02x", id, port);
+            AlwaysLog("SIO 0x%02x: id 0x%04x, no supported Nuvoton EC", port, id);
             sioExit();
             continue;
         }
@@ -119,10 +136,10 @@ bool ThinkCentre::detectChip() {
         sioSelect(SioLdHwm);
         UInt16 base = static_cast<UInt16>(sioRead(SioRegAddr) << 8) | sioRead(SioRegAddr + 1);
         base &= static_cast<UInt16>(~7);
-        if (base == 0) {
-            AlwaysLog("EC base I/O port unconfigured");
+        if (base < 0x100 || base >= 0xFF00) {
+            AlwaysLog("SIO 0x%02x: EC base 0x%04x out of range", port, base);
             sioExit();
-            return false;
+            continue;
         }
 
         UInt8 enable = sioRead(SioRegEnable);
@@ -132,16 +149,19 @@ bool ThinkCentre::detectChip() {
         }
 
         sioExit();
-        ecBase = base + EcPageRegOff;
-        AlwaysLog("Found Nuvoton EC 0x%04x at SIO 0x%02x, EC base 0x%04x", id, port, ecBase);
+        ecBase = base;
+        AlwaysLog("Found Nuvoton EC 0x%04x at SIO 0x%02x, HWM base 0x%04x", id, port, ecBase);
         return true;
     }
+    AlwaysLog("No supported Nuvoton EC at 0x2E/0x4E, not attaching");
     return false;
 }
 
 void ThinkCentre::setupFans() {
     for (UInt8 i = 0; i < 16 && fanCount < TC_MAX_FAN; i++) {
-        if (ecRead8(RegFaninCfg + i) & 0x01) {
+        UInt8 cfg = ecRead8(RegFaninCfg + i);
+        DebugLog("FANIN_CFG[%d] = 0x%02x", i, cfg);
+        if (cfg & 0x80) {
             tachIndex[fanCount] = i;
             fanCount++;
         }
@@ -149,7 +169,10 @@ void ThinkCentre::setupFans() {
 
     pwmAvailable = false;
     for (UInt8 i = 0; i < 8; i++) {
-        if (ecRead8(RegFanoutCfg + i) & 0x80) {
+        UInt8 cfg = ecRead8(RegFanoutCfg + i);
+        DebugLog("FANOUT_CFG[%d] = 0x%02x", i, cfg);
+        if (cfg & 0x80) {
+            pwmIndex = i;
             pwmAvailable = true;
             break;
         }
@@ -185,7 +208,7 @@ IOReturn ThinkCentre::setFanDuty(UInt8 duty) {
 
     ecWrite8(RegFanCfgCtrl, FanCfgReq);
     IODelay(1500);
-    ecWrite8(RegPwmWrite + 0, duty);
+    ecWrite8(RegPwmWrite + pwmIndex, duty);
     ecWrite8(RegFanCfgCtrl, FanCfgDone);
 
     atomic_store_explicit(&handshakeActive, 0, memory_order_release);
@@ -227,14 +250,14 @@ void ThinkCentre::updateSensors() {
     }
 
     for (UInt8 i = 0; i < tempSensorCount; i++) {
-        UInt16 raw = ecRead16(RegMon + monIndex[i] * 2);
-        // 1/256 degree C per LSB
-        UInt32 centi = static_cast<UInt32>(raw) * 100 / 256;
-        atomic_store_explicit(&tempSensor[i], (centi + 5) / 10, memory_order_release);
+        SInt16 raw = static_cast<SInt16>(ecRead16(RegMon + monIndex[i] * 2));
+        // 1/256 degree C per LSB, signed, rounded to whole degrees
+        SInt32 degC = (static_cast<SInt32>(raw) + 128) >> 8;
+        atomic_store_explicit(&tempSensor[i], static_cast<UInt32>(degC), memory_order_release);
     }
 
     if (!manualMode) {
-        UInt8 duty = ecRead8(RegPwm + 0);
+        UInt8 duty = ecRead8(RegPwm + pwmIndex);
         setProperty("FanDuty", duty, 8);
     }
 
@@ -288,6 +311,8 @@ bool ThinkCentre::init(OSDictionary *dictionary) {
 
     ioLock = IOSimpleLockAlloc();
     atomic_init(&handshakeActive, 0);
+    if (!ioLock)
+        AlwaysLog("IOSimpleLockAlloc failed");
     return ioLock != nullptr;
 }
 
@@ -301,13 +326,21 @@ void ThinkCentre::free() {
 
 IOService *ThinkCentre::probe(IOService *provider, SInt32 *score) {
     AlwaysLog("Probing %s", provider->getName());
+    provider->setProperty("YSMC-TC-Probe", "entered");
     if (!YogaBaseService::probe(provider, score))
         return nullptr;
 
     iname = "ThinkCentre";
 
-    if (!detectChip())
+    if (!detectChip()) {
+        provider->setProperty("YSMC-TC-Probe", "detectChip-failed");
+        provider->setProperty("YSMC-TC-SioId2E", scannedId[0], 32);
+        provider->setProperty("YSMC-TC-SioId4E", scannedId[1], 32);
         return nullptr;
+    }
+
+    provider->setProperty("YSMC-TC-Probe", "matched");
+    provider->setProperty("YSMC-TC-ecBase", ecBase, 32);
 
     customerId = ecRead16(RegCustomerId);
     AlwaysLog("EC customer id 0x%04x, version %d.%d", customerId, ecRead8(RegVersionHi), ecRead8(RegVersionHi + 1));
@@ -328,13 +361,14 @@ bool ThinkCentre::start(IOService *provider) {
     setupFans();
     setupTemperatures();
 
-    if (fanCount == 0) {
-        AlwaysLog("No fan input enabled, exiting");
-        return false;
-    }
+    if (fanCount == 0)
+        AlwaysLog("No fan input enabled, publishing sensors only");
 
     setProperty("FanCount", fanCount, 8);
     setProperty("PwmAvailable", pwmAvailable);
+    setProperty("PwmIndex", pwmIndex, 8);
+    setProperty("TachIndex", tachIndex[0], 8);
+    setProperty("TempSensorCount", tempSensorCount, 8);
 
     poller = IOTimerEventSource::timerEventSource(this, [](OSObject *object, IOTimerEventSource *sender) {
         auto me = OSDynamicCast(ThinkCentre, object);
@@ -435,7 +469,7 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
     bool busy = atomic_load_explicit(&handshakeActive, memory_order_acquire);
     switch (offset) {
         case EmuFanDuty:
-            *result = manualMode ? manualDuty : (busy ? 0 : ecRead8(RegPwm + 0));
+            *result = manualMode ? manualDuty : (busy ? 0 : ecRead8(RegPwm + pwmIndex));
             return kIOReturnSuccess;
 
         case EmuFanLevel:
@@ -451,6 +485,8 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
 
         case EmuFanRpm:
         case EmuFanRpm + 1: {
+            if (fanCount == 0)
+                return kIOReturnUnsupported;
             UInt16 rpm = busy ? static_cast<UInt16>(atomic_load_explicit(&fanRpm[0], memory_order_acquire))
                               : ecRead16(RegFanRpm + tachIndex[0] * 2);
             *result = (offset == EmuFanRpm) ? (rpm & 0xFF) : (rpm >> 8);
@@ -464,6 +500,8 @@ IOReturn ThinkCentre::method_re1b(UInt32 offset, UInt8 *result) {
 
 IOReturn ThinkCentre::method_recb(UInt32 offset, UInt32 size, OSData **data) {
     if (offset == EmuFanRpm && size == 2) {
+        if (fanCount == 0)
+            return kIOReturnUnsupported;
         UInt16 rpm = atomic_load_explicit(&handshakeActive, memory_order_acquire)
             ? static_cast<UInt16>(atomic_load_explicit(&fanRpm[0], memory_order_acquire))
             : ecRead16(RegFanRpm + tachIndex[0] * 2);

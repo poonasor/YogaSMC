@@ -24,6 +24,7 @@
 		6F14956F2580BF7200A3BA83 /* AudioHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F14956E2580BF7200A3BA83 /* AudioHelper.swift */; };
 		6F1495D32582000500A3BA83 /* IdeaSMCPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1495D22582000500A3BA83 /* IdeaSMCPane.swift */; };
 		6F1495DF258200DA00A3BA83 /* ThinkSMCPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1495DE258200DA00A3BA83 /* ThinkSMCPane.swift */; };
+		6FCE01A12D0100CE00CE01A1 /* CentreSMCPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCE01A02D0100CE00CE01A0 /* CentreSMCPane.swift */; };
 		6F1C7093251473BB007D1DFC /* YogaSMCPane.icns in Resources */ = {isa = PBXBuildFile; fileRef = 6F1C7092251473BB007D1DFC /* YogaSMCPane.icns */; };
 		6F1C7096251473BB007D1DFC /* YogaSMCPane.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6F1C7094251473BB007D1DFC /* YogaSMCPane.xib */; };
 		6F1C70A0251473CD007D1DFC /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F1C709F251473CD007D1DFC /* IOKit.framework */; };
@@ -227,6 +228,7 @@
 		6F14956E2580BF7200A3BA83 /* AudioHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioHelper.swift; sourceTree = "<group>"; };
 		6F1495D22582000500A3BA83 /* IdeaSMCPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdeaSMCPane.swift; sourceTree = "<group>"; };
 		6F1495DE258200DA00A3BA83 /* ThinkSMCPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkSMCPane.swift; sourceTree = "<group>"; };
+		6FCE01A02D0100CE00CE01A0 /* CentreSMCPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentreSMCPane.swift; sourceTree = "<group>"; };
 		6F1C708C251473BB007D1DFC /* YogaSMCPane.prefPane */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YogaSMCPane.prefPane; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F1C7092251473BB007D1DFC /* YogaSMCPane.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = YogaSMCPane.icns; sourceTree = "<group>"; };
 		6F1C7095251473BB007D1DFC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/YogaSMCPane.xib; sourceTree = "<group>"; };
@@ -471,6 +473,7 @@
 				6F1495D22582000500A3BA83 /* IdeaSMCPane.swift */,
 				6FC40F1E25909D83004A6D48 /* GeneralSMCPane.swift */,
 				6F1495DE258200DA00A3BA83 /* ThinkSMCPane.swift */,
+				6FCE01A02D0100CE00CE01A0 /* CentreSMCPane.swift */,
 				6F1C70A625147410007D1DFC /* YogaSMCPane.swift */,
 				6F1C7092251473BB007D1DFC /* YogaSMCPane.icns */,
 				6F1C7094251473BB007D1DFC /* YogaSMCPane.xib */,
@@ -981,6 +984,7 @@
 				6F8B1F252538083A003DD8A8 /* PropertyHelper.swift in Sources */,
 				6F1495D32582000500A3BA83 /* IdeaSMCPane.swift in Sources */,
 				6F1495DF258200DA00A3BA83 /* ThinkSMCPane.swift in Sources */,
+				6FCE01A12D0100CE00CE01A1 /* CentreSMCPane.swift in Sources */,
 				6F8AF13B254DF79100438EC8 /* ScriptHelper.swift in Sources */,
 				6F8AF141254DF89600438EC8 /* SystemPreferences.swift in Sources */,
 				6F1C70A725147410007D1DFC /* YogaSMCPane.swift in Sources */,
@@ -1283,7 +1287,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCNC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "YogaSMCUtils/YogaSMC-Bridging-Header.h";
@@ -1311,7 +1315,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCNC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "YogaSMCUtils/YogaSMC-Bridging-Header.h";
@@ -1339,7 +1343,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCPane;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "YogaSMCUtils/YogaSMC-Bridging-Header.h";
@@ -1368,7 +1372,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCPane;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "YogaSMCUtils/YogaSMC-Bridging-Header.h";
@@ -1389,7 +1393,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCNCHelper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1404,7 +1408,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.zhen.YogaSMCNCHelper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
