@@ -12,7 +12,7 @@ rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 
 swiftc -O -module-name YogaSMCNC \
-    -target x86_64-apple-macos10.13 \
+    -target x86_64-apple-macos13.0 \
     -import-objc-header YogaSMCUtils/YogaSMC-Bridging-Header.h \
     -F Frameworks \
     YogaSMCNC/*.swift \
@@ -30,7 +30,7 @@ sed -e "s/\$(DEVELOPMENT_LANGUAGE)/en/" \
     -e "s/\$(PRODUCT_NAME)/YogaSMCNC/" \
     -e "s/\$(PRODUCT_BUNDLE_PACKAGE_TYPE)/APPL/" \
     -e "s/\$(CURRENT_PROJECT_VERSION)/$VERSION/g" \
-    -e "s/\$(MACOSX_DEPLOYMENT_TARGET)/10.13/" \
+    -e "s/\$(MACOSX_DEPLOYMENT_TARGET)/13.0/" \
     -e "/NSMainStoryboardFile/,+1d" \
     YogaSMCNC/Info.plist > "$OUT/Contents/Info.plist"
 plutil -lint "$OUT/Contents/Info.plist"
